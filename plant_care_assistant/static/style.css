@@ -338,6 +338,7 @@ body::before {
 }
 
 .profile-note,
+.image-alternatives,
 .health-card {
   margin-top: 18px;
   padding: 22px;
@@ -347,10 +348,56 @@ body::before {
 }
 
 .profile-note p,
+.image-alternatives p,
+.alternative-list small,
 .health-card p {
   margin: 0;
   color: var(--muted);
   line-height: 1.75;
+}
+
+.image-alternatives {
+  background: rgba(255, 254, 249, 0.82);
+}
+
+.alternative-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.alternative-list form {
+  margin: 0;
+}
+
+.alternative-list button {
+  width: 100%;
+  border: 1px solid rgba(47, 111, 67, 0.14);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(162, 197, 121, 0.1);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.alternative-list button:hover {
+  border-color: rgba(47, 111, 67, 0.32);
+  background: rgba(162, 197, 121, 0.18);
+}
+
+.alternative-list span,
+.alternative-list small {
+  display: block;
+}
+
+.alternative-list span {
+  font-weight: 700;
+}
+
+.alternative-list small {
+  margin-top: 3px;
 }
 
 .health-card {

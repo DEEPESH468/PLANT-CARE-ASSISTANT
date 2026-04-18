@@ -29,6 +29,10 @@ plant_care_assistant/
 ├── main.py
 ├── app.py
 ├── image_classifier.py
+├── train_image_model.py
+├── scripts/
+│   ├── import_huggingface_plants.py
+│   └── prepare_dataset.py
 ├── database_utils.py
 ├── plants_database.json
 ├── static/
@@ -58,7 +62,24 @@ plant_care_assistant/
 - Resizes the image
 - Normalizes pixel values
 - Extracts image features
-- Uses a simple `scikit-learn` KNN classifier to predict the plant name
+- Loads a trained model from `plant_image_model.joblib` when available
+- Falls back to real images in `training_images/` or built-in demo prototypes
+- Uses a `scikit-learn` KNN classifier to predict the plant name
+
+### `train_image_model.py`
+- Trains the image classifier from local folders
+- Saves the trained model as `plant_image_model.joblib`
+- Prints image counts and validation accuracy when enough data is available
+
+### `scripts/prepare_dataset.py`
+- Copies matching plant images from an extracted dataset into `training_images/`
+- Supports class-name matching for plants such as Aloe Vera, Snake Plant, Money Plant, Peace Lily, Syngonium, Anthurium, and others
+- Keeps downloaded datasets separate from source code
+
+### `scripts/import_huggingface_plants.py`
+- Imports selected classes from `funkepal/medicinal_plant_images`
+- Adds extra training images for Aloe Vera, Hibiscus, Rose, and Tulsi
+- Helps cover app plants that are missing from the houseplant species dataset
 
 ### `database_utils.py`
 - Loads plant care data from the JSON database
@@ -169,6 +190,143 @@ python3 app.py
 
 5. Open `http://127.0.0.1:5000` in your browser.
 6. Use the text search form or image upload form on the page.
+
+## How to Train Image Recognition with a Dataset
+
+The app can use a locally trained model for better image upload accuracy.
+
+Recommended dataset choice:
+
+- `kakasher/house-plant-species` on Hugging Face is better for household plant species recognition.
+- `hadyahmed00/plants-leafs-dataset` on Kaggle is better for leaf disease or healthy/unhealthy detection because it focuses on plant leaves and disease classes.
+
+Keep downloaded datasets and trained model files out of GitHub. The repo ignores:
+
+```text
+training_images/
+datasets/
+plant_image_model.joblib
+```
+
+### 1. Download and extract a dataset
+
+Create a local dataset folder:
+
+```bash
+mkdir -p datasets
+```
+
+For the Hugging Face houseplant dataset, download and extract it into:
+
+```text
+plant_care_assistant/datasets/house-plant-species/
+```
+
+One way to download it from the terminal is:
+
+```bash
+mkdir -p datasets/house-plant-species
+curl -L "https://huggingface.co/datasets/kakasher/house-plant-species/resolve/main/house_plant_species.tar" -o datasets/house_plant_species.tar
+tar -xf datasets/house_plant_species.tar -C datasets/house-plant-species
+```
+
+For the Kaggle plant leaves dataset, download and extract it into:
+
+```text
+plant_care_assistant/datasets/plants-leafs-dataset/
+```
+
+From Kaggle, download the ZIP from:
+
+```text
+https://www.kaggle.com/datasets/hadyahmed00/plants-leafs-dataset
+```
+
+Then move/extract it into:
+
+```text
+plant_care_assistant/datasets/plants-leafs-dataset/
+```
+
+### 2. Prepare matching training folders
+
+From the `plant_care_assistant` folder, run one of these:
+
+```bash
+python3 scripts/prepare_dataset.py datasets/house-plant-species --max-images-per-class 80
+```
+
+or:
+
+```bash
+python3 scripts/prepare_dataset.py datasets/plants-leafs-dataset --max-images-per-class 80
+```
+
+To add extra images for Aloe Vera, Hibiscus, Rose, and Tulsi from Hugging Face:
+
+```bash
+python3 scripts/import_huggingface_plants.py --max-images-per-class 160
+```
+
+This creates folders like:
+
+```text
+training_images/
+├── Aloe Vera/
+├── Money Plant/
+├── Peace Lily/
+├── Snake Plant/
+└── Syngonium/
+```
+
+### 3. Train the model
+
+```bash
+python3 train_image_model.py
+```
+
+This creates:
+
+```text
+plant_image_model.joblib
+```
+
+### 4. Run the app again
+
+Restart Flask after training:
+
+```bash
+python3 app.py
+```
+
+The upload feature will automatically use `plant_image_model.joblib`.
+
+If the dataset does not contain some plants from the app database, those plants cannot be recognized accurately from photos until you add labeled images for them.
+
+Current trained dataset coverage:
+
+```text
+Aglaonema
+Aloe Vera
+Anthurium
+Areca Palm
+Hibiscus
+Jade Plant
+Money Plant
+Patharchatta
+Peace Lily
+Rose
+Snake Plant
+Tulsi
+```
+
+Still missing from the image dataset:
+
+```text
+Satavar
+Spider Plant
+Syngonium
+```
 
 ## How to Add More Plants
 

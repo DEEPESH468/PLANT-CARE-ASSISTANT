@@ -149,6 +149,28 @@
             {% endif %}
           </div>
 
+          {% if image_alternatives %}
+          <div class="image-alternatives">
+            <span class="result-label">Other Possible Matches</span>
+            <p>
+              Image recognition is best treated as a shortlist. Choose another
+              match below if the first result does not look correct.
+            </p>
+            <div class="alternative-list">
+              {% for alternative in image_alternatives %}
+              <form method="post">
+                <input type="hidden" name="action" value="text-search" />
+                <input type="hidden" name="plant_name" value="{{ alternative.plant_name }}" />
+                <button type="submit">
+                  <span>{{ alternative.plant_name }}</span>
+                  <small>{{ '%.1f'|format(alternative.confidence * 100) }}% visual match</small>
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
           {% if health_analysis %}
           <div class="health-card">
             <span class="result-label">Image Health Check</span>

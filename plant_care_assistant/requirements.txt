@@ -4,3 +4,5 @@ opencv-python
 pillow
 scikit-learn
 Flask
+joblib
+datasets

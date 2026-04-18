@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+
+plant_care_assistant/venv/
+plant_care_assistant/training_images/
+plant_care_assistant/datasets/
+plant_care_assistant/plant_image_model.joblib

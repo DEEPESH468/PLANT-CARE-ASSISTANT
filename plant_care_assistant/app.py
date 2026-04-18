@@ -75,6 +75,7 @@ def index():
     search_query = ""
     suggestions = []
     health_analysis = None
+    image_alternatives = []
 
     if request.method == "POST":
         action = request.form.get("action", "text-search")
@@ -112,6 +113,7 @@ def index():
 
                     prediction = CLASSIFIER.predict(temp_path)
                     confidence = prediction["confidence"]
+                    image_alternatives = prediction.get("alternatives", [])
                     health_analysis = CLASSIFIER.analyze_plant_health(temp_path)
                     result = get_plant_care_info(DATABASE, prediction["plant_name"])
 
@@ -136,6 +138,7 @@ def index():
         search_query=search_query,
         suggestions=suggestions,
         health_analysis=health_analysis,
+        image_alternatives=image_alternatives,
         mineral_deficiencies=MINERAL_DEFICIENCIES,
         common_diseases=COMMON_DISEASES,
         placement_groups=_group_plants_by_location(DATABASE),
