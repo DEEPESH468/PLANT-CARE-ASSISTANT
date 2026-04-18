@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plant Care Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">AI-powered university project</p>
+          <h1>Plant Care Assistant</h1>
+          <p class="hero-text">
+            Identify plants from text or image input and get care guidance for
+            scientific names, family, air-purifying value, care needs, and visible
+            plant-health clues.
+          </p>
+          <div class="plant-tags">
+            {% for plant in plants %}
+            <span>{{ plant }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="panel-stat">
+            <strong>2</strong>
+            <span>Input methods</span>
+          </div>
+          <div class="panel-stat">
+            <strong>{{ plant_count }}</strong>
+            <span>Plant profiles</span>
+          </div>
+          <div class="panel-stat">
+            <strong>1</strong>
+            <span>Clean web app</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="input-card">
+          <div class="tab-row">
+            <a
+              href="#text-search"
+              class="tab {% if active_tab == 'text' %}is-active{% endif %}"
+            >
+              Text Search
+            </a>
+            <a
+              href="#image-search"
+              class="tab {% if active_tab == 'image' %}is-active{% endif %}"
+            >
+              Image Upload
+            </a>
+          </div>
+
+          <div class="forms-grid">
+            <form id="text-search" method="post" class="tool-panel">
+              <input type="hidden" name="action" value="text-search" />
+              <h2>Search by Plant Name</h2>
+              <p>Type a plant name like Syngonium, Ghritkumari, Satavar, or Peace Lily.</p>
+              <label for="plant_name">Plant name</label>
+              <input
+                id="plant_name"
+                name="plant_name"
+                type="text"
+                list="plant-options"
+                placeholder="Enter a plant name"
+                value="{{ search_query }}"
+              />
+              <datalist id="plant-options">
+                {% for plant in plants %}
+                <option value="{{ plant }}"></option>
+                {% endfor %}
+              </datalist>
+              <button type="submit">Search Plant Care</button>
+            </form>
+
+            <form
+              id="image-search"
+              method="post"
+              enctype="multipart/form-data"
+              class="tool-panel upload-panel"
+            >
+              <input type="hidden" name="action" value="image-search" />
+              <h2>Recognize from Image</h2>
+              <p>Upload a clear photo. The app classifies the plant and checks visible leaf stress.</p>
+              <label for="plant_image" class="upload-box">
+                <span>Choose a plant image</span>
+                <small>Accepted: JPG, PNG, BMP, WEBP</small>
+              </label>
+              <input id="plant_image" name="plant_image" type="file" accept="image/*" />
+              <button type="submit">Identify Plant</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-header">
+            <h2>Plant Care Output</h2>
+            <p>Results from the knowledge base appear here.</p>
+          </div>
+
+          {% if error_message %}
+          <div class="message error">{{ error_message }}</div>
+          {% endif %}
+
+          {% if suggestions %}
+          <div class="suggestions">
+            <span>Did you mean</span>
+            {% for suggestion in suggestions %}
+            <form method="post">
+              <input type="hidden" name="action" value="text-search" />
+              <input type="hidden" name="plant_name" value="{{ suggestion }}" />
+              <button type="submit">{{ suggestion }}</button>
+            </form>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if result %}
+          <div class="result-summary">
+            <span class="result-label">Plant Identified</span>
+            <h3>{{ result.plant_name }}</h3>
+            {% if result.scientific_name %}
+            <p class="scientific-name">{{ result.scientific_name }}</p>
+            {% endif %}
+            {% if matched_by == 'fuzzy' %}
+            <p class="confidence">Best match for "{{ search_query }}".</p>
+            {% endif %}
+            {% if confidence is not none %}
+            <p class="confidence">Model confidence: {{ '%.2f'|format(confidence * 100) }}%</p>
+            {% endif %}
+          </div>
+
+          {% if health_analysis %}
+          <div class="health-card">
+            <span class="result-label">Image Health Check</span>
+            <h4>{{ health_analysis.issue }}</h4>
+            <p>{{ health_analysis.care_hint }}</p>
+            <p class="health-note">
+              Yellow: {{ '%.1f'|format(health_analysis.yellow_percent) }}% |
+              Brown: {{ '%.1f'|format(health_analysis.brown_percent) }}% |
+              Dark spots: {{ '%.1f'|format(health_analysis.dark_spot_percent) }}%
+            </p>
+            <small>{{ health_analysis.note }}</small>
+          </div>
+          {% endif %}
+
+          {% if result.description %}
+          <div class="profile-note">
+            <span class="result-label">Plant Profile</span>
+            <p>{{ result.description }}</p>
+          </div>
+          {% endif %}
+
+          <div class="care-grid">
+            {% if result.family %}
+            <article class="care-item">
+              <span class="care-icon">Family</span>
+              <h4>Botanical Family</h4>
+              <p>{{ result.family }}</p>
+            </article>
+            {% endif %}
+            {% if result.air_purifying_level %}
+            <article class="care-item accent">
+              <span class="care-icon">Air</span>
+              <h4>Air Purifying Level</h4>
+              <p>{{ result.air_purifying_level }}</p>
+            </article>
+            {% endif %}
+            <article class="care-item">
+              <span class="care-icon">Water</span>
+              <h4>Water Frequency</h4>
+              <p>{{ result.water_frequency }}</p>
+            </article>
+            <article class="care-item">
+              <span class="care-icon">Sun</span>
+              <h4>Sunlight Requirement</h4>
+              <p>{{ result.sunlight_requirement }}</p>
+            </article>
+            {% if result.location %}
+            <article class="care-item accent">
+              <span class="care-icon">Place</span>
+              <h4>Indoor or Outdoor</h4>
+              <p>{{ result.location }}</p>
+            </article>
+            {% endif %}
+            {% if result.soil_type %}
+            <article class="care-item">
+              <span class="care-icon">Soil</span>
+              <h4>Soil Type</h4>
+              <p>{{ result.soil_type }}</p>
+            </article>
+            {% endif %}
+            {% if result.temperature %}
+            <article class="care-item">
+              <span class="care-icon">Temp</span>
+              <h4>Temperature</h4>
+              <p>{{ result.temperature }}</p>
+            </article>
+            {% endif %}
+            <article class="care-item">
+              <span class="care-icon">Care</span>
+              <h4>Handling and Maintenance</h4>
+              <p>{{ result.maintenance_tips }}</p>
+            </article>
+            <article class="care-item accent">
+              <span class="care-icon">Tip</span>
+              <h4>Unique Pro Tip</h4>
+              <p>{{ result.unique_pro_tip }}</p>
+            </article>
+            <article class="care-item">
+              <span class="care-icon">Level</span>
+              <h4>Care Difficulty</h4>
+              <p>{{ result.difficulty }}</p>
+            </article>
+            <article class="care-item">
+              <span class="care-icon">Watch</span>
+              <h4>Common Problem</h4>
+              <p>{{ result.common_problem }}</p>
+            </article>
+            {% if result.disease_or_deficiency %}
+            <article class="care-item accent">
+              <span class="care-icon">Risk</span>
+              <h4>Disease or Deficiency</h4>
+              <p>{{ result.disease_or_deficiency }}</p>
+            </article>
+            {% endif %}
+            {% if result.plant_part_used %}
+            <article class="care-item">
+              <span class="care-icon">Use</span>
+              <h4>Plant Part Used</h4>
+              <p>{{ result.plant_part_used }}</p>
+            </article>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <h3>No result yet</h3>
+            <p>
+              Use text search or upload a plant image to see the full care profile
+              here.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Packet Journey Visualizer</title>
+  <style>
+    :root {
+      --ink: #14201d;
+      --muted: #60736c;
+      --page: #eaf8f1;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-strong: #ffffff;
+      --line: rgba(20, 32, 29, 0.12);
+      --teal: #009b84;
+      --mint: #6ee7c8;
+      --cyan: #28a8d8;
+      --coral: #ff6b57;
+      --yellow: #f7c744;
+      --leaf: #71a95a;
+      --shadow: 0 28px 70px rgba(28, 72, 62, 0.16);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(0, 155, 132, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(40, 168, 216, 0.08) 1px, transparent 1px),
+        linear-gradient(135deg, #eaf8f1 0%, #eef9ff 48%, #fff4f0 100%);
+      background-size: 38px 38px, 38px 38px, auto;
+    }
+
+    main {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 22px 0 38px;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 300px;
+      display: grid;
+      align-items: end;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.64);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #14201d;
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+
+    .hero-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.1) contrast(1.05);
+      z-index: -2;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(4, 18, 16, 0.82), rgba(4, 18, 16, 0.42) 56%, rgba(4, 18, 16, 0.1)),
+        linear-gradient(0deg, rgba(0, 155, 132, 0.32), transparent 58%);
+      z-index: -1;
+    }
+
+    .hero-content {
+      width: min(820px, 100%);
+      padding: 34px;
+      color: #f7fffc;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(110, 231, 200, 0.55);
+      border-radius: 8px;
+      padding: 8px 11px;
+      background: rgba(7, 27, 24, 0.56);
+      color: #c8fff2;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0;
+      backdrop-filter: blur(14px);
+    }
+
+    .pulse {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 0 6px rgba(110, 231, 200, 0.18), 0 0 28px rgba(110, 231, 200, 0.88);
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      color: #ffffff;
+      font-size: 50px;
+      line-height: 1.05;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .subtitle {
+      max-width: 700px;
+      margin-top: 14px;
+      color: #dbfff6;
+      font-size: 18px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: -44px 20px 18px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .metric {
+      min-height: 92px;
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 18px 40px rgba(28, 72, 62, 0.14);
+      backdrop-filter: blur(18px);
+    }
+
+    .metric span {
+      display: block;
+      color: #667a72;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink);
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .control-strip {
+      display: grid;
+      grid-template-columns: auto minmax(220px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 8px;
+      padding: 13px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    label {
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    input {
+      width: 100%;
+      height: 52px;
+      border: 1px solid rgba(20, 32, 29, 0.18);
+      border-radius: 8px;
+      padding: 0 16px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 750;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    input:focus {
+      border-color: var(--teal);
+      outline: 4px solid rgba(0, 155, 132, 0.16);
+    }
+
+    button {
+      min-height: 52px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 20px;
+      background: var(--ink);
+      color: #f8fffc;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 950;
+      box-shadow: 0 18px 32px rgba(20, 32, 29, 0.22);
+      transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+    }
+
+    button:hover {
+      background: #0b2f29;
+      transform: translateY(-1px);
+      box-shadow: 0 22px 40px rgba(20, 32, 29, 0.24);
+    }
+
+    .summary {
+      margin-bottom: 16px;
+      border: 1px solid rgba(0, 155, 132, 0.22);
+      border-left: 6px solid var(--teal);
+      border-radius: 8px;
+      padding: 15px 17px;
+      background: rgba(236, 255, 250, 0.84);
+      color: #17433a;
+      font-weight: 850;
+      box-shadow: 0 18px 44px rgba(0, 155, 132, 0.08);
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .comparison-card {
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 8px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 18px 36px rgba(28, 72, 62, 0.1);
+    }
+
+    .comparison-card span {
+      display: block;
+      color: #657970;
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .comparison-card strong,
+    .comparison-card code {
+      display: block;
+      margin-top: 6px;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .comparison-card code {
+      border-radius: 8px;
+      padding: 7px 9px;
+      background: #e9f7f2;
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    }
+
+    .comparison-card p {
+      margin-top: 8px;
+      color: #60736c;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .comparison-card.live {
+      border-color: rgba(0, 155, 132, 0.36);
+    }
+
+    .comparison-card.demo {
+      border-color: rgba(255, 107, 87, 0.32);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.55fr);
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .panel-head h2,
+    .inspector h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 19px;
+    }
+
+    .status-pill {
+      border-radius: 8px;
+      padding: 7px 10px;
+      background: #fff1b8;
+      color: #6f5607;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .diagram {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      align-items: center;
+      min-height: 320px;
+      padding: 26px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(0, 155, 132, 0.12) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(40, 168, 216, 0.1) 1px, transparent 1px),
+        linear-gradient(135deg, #f5fffc, #ecfbff);
+      background-size: 32px 32px, 32px 32px, auto;
+    }
+
+    .diagram::before {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      top: 50%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--teal), var(--cyan), var(--coral));
+      transform: translateY(-50%);
+      box-shadow: 0 12px 36px rgba(0, 155, 132, 0.26);
+    }
+
+    .packet-dot {
+      position: absolute;
+      top: calc(50% - 11px);
+      left: 12%;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--yellow);
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 0 10px rgba(247, 199, 68, 0.22), 0 0 32px rgba(247, 199, 68, 0.86);
+      animation: travel 3.8s ease-in-out infinite;
+      z-index: 3;
+    }
+
+    @keyframes travel {
+      0%, 100% {
+        left: 12%;
+      }
+      38% {
+        left: 50%;
+      }
+      62% {
+        left: 50%;
+      }
+      88% {
+        left: calc(88% - 22px);
+      }
+    }
+
+    .node {
+      position: relative;
+      z-index: 2;
+      min-height: 150px;
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 8px;
+      padding: 20px 16px;
+      background: rgba(255, 255, 255, 0.86);
+      text-align: center;
+      box-shadow: 0 22px 46px rgba(28, 72, 62, 0.16);
+      backdrop-filter: blur(16px);
+    }
+
+    .node small {
+      display: inline-block;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      padding: 6px 9px;
+      color: #ffffff;
+      background: var(--teal);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .node-resolver small {
+      background: var(--cyan);
+    }
+
+    .node-destination small {
+      background: var(--coral);
+    }
+
+    .node strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--ink);
+      font-size: 21px;
+    }
+
+    .node code {
+      display: inline-block;
+      border-radius: 8px;
+      padding: 7px 10px;
+      background: #e9f7f2;
+      color: #243f39;
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .flow-text {
+      grid-column: 1 / -1;
+      position: relative;
+      z-index: 2;
+      border: 1px dashed rgba(0, 155, 132, 0.38);
+      border-radius: 8px;
+      padding: 13px;
+      background: rgba(255, 255, 255, 0.88);
+      color: #164a42;
+      font-weight: 950;
+      text-align: center;
+      overflow-wrap: anywhere;
+      box-shadow: 0 16px 36px rgba(28, 72, 62, 0.08);
+    }
+
+    .inspector {
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .detail {
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail-row {
+      border: 1px solid rgba(20, 32, 29, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .detail-row span {
+      display: block;
+      margin-bottom: 6px;
+      color: #657970;
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .detail-row strong {
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(92px, 1fr));
+      gap: 11px;
+      margin-bottom: 16px;
+    }
+
+    .step {
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      border-radius: 8px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      cursor: pointer;
+      color: var(--ink);
+      text-align: left;
+      box-shadow: 0 18px 36px rgba(28, 72, 62, 0.1);
+      backdrop-filter: blur(14px);
+    }
+
+    .step:hover,
+    .step.active {
+      border-color: rgba(0, 155, 132, 0.52);
+      outline: 4px solid rgba(0, 155, 132, 0.13);
+      background: #effffb;
+    }
+
+    .step span {
+      display: block;
+      color: #6d7f78;
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .step strong {
+      display: block;
+      margin-top: 7px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    table {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid rgba(20, 32, 29, 0.08);
+      padding: 14px 13px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #14342f;
+      color: #f0fffb;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(232, 250, 245, 0.78);
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+
+    tbody tr:hover,
+    tbody tr.active-row {
+      background: #dcfff5;
+    }
+
+    .badge {
+      display: inline-block;
+      min-width: 64px;
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .badge-dns {
+      background: var(--cyan);
+    }
+
+    .badge-tcp {
+      background: var(--teal);
+    }
+
+    .badge-https {
+      background: var(--coral);
+    }
+
+    .port {
+      display: inline-block;
+      min-width: 50px;
+      border-radius: 8px;
+      padding: 5px 8px;
+      background: #fff0b8;
+      color: #765f09;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .tip {
+      margin-top: 16px;
+      border: 1px solid rgba(0, 155, 132, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(236, 255, 250, 0.84);
+      color: #17433a;
+      font-weight: 850;
+      box-shadow: 0 18px 44px rgba(0, 155, 132, 0.08);
+    }
+
+    @media (max-width: 980px) {
+      .stage {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics {
+        margin: -28px 12px 16px;
+      }
+
+      .timeline {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      main {
+        width: min(100% - 18px, 1240px);
+        padding-top: 10px;
+      }
+
+      .hero {
+        min-height: 360px;
+      }
+
+      .hero-content {
+        padding: 22px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .control-strip,
+      .metrics,
+      .diagram,
+      .timeline {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics {
+        margin: 0 0 16px;
+      }
+
+      .diagram::before,
+      .packet-dot {
+        display: none;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <img class="hero-image" src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1800&q=80" alt="Network server racks with illuminated cables">
+      <div class="hero-content">
+        <span class="eyebrow"><span class="pulse"></span>Computer Networks PBL</span>
+        <h1>Packet Journey Visualizer</h1>
+        <p class="subtitle">Trace how a domain becomes DNS packets, a server IP, a TCP handshake, and an HTTPS-ready connection.</p>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Network facts">
+      <div class="metric"><span>DNS port</span><strong>53</strong></div>
+      <div class="metric"><span>HTTPS port</span><strong>443</strong></div>
+      <div class="metric"><span>TCP setup</span><strong>3-way</strong></div>
+    </section>
+
+    <section class="control-strip" aria-label="Simulation controls">
+      <label for="domain">Domains</label>
+      <input id="domain" value="google.com, github.com" autocomplete="off" spellcheck="false">
+      <button id="simulate">Run Simulation</button>
+    </section>
+
+    <p class="summary" id="summary"></p>
+    <section class="comparison-grid" id="comparisonGrid" aria-label="DNS comparison results"></section>
+
+    <section class="stage">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Network Path</h2>
+          <span class="status-pill">DNS -> TCP -> HTTPS</span>
+        </div>
+        <div class="diagram" aria-label="Network flow diagram">
+          <span class="packet-dot" aria-hidden="true"></span>
+          <div class="node node-client"><small>Client</small><strong>Your Machine</strong><code id="clientIp">192.168.1.100</code></div>
+          <div class="node node-resolver"><small>Resolver</small><strong>DNS Server</strong><code id="dnsIp">8.8.8.8</code></div>
+          <div class="node node-destination"><small>Destination</small><strong>Web Server</strong><code id="serverIp">142.250.185.46</code></div>
+          <div class="flow-text" id="flowText">DNS query -> DNS response -> TCP SYN -> SYN-ACK -> ACK -> HTTPS ready</div>
+        </div>
+      </div>
+
+      <aside class="panel inspector" aria-label="Selected packet details">
+        <h2>Selected Packet</h2>
+        <div class="detail" id="packetDetail"></div>
+      </aside>
+    </section>
+
+    <section class="timeline" id="timeline" aria-label="Packet timeline"></section>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Domain</th>
+            <th>Source IP</th>
+            <th>Destination IP</th>
+            <th>Protocol</th>
+            <th>Port</th>
+            <th>Status</th>
+            <th>Payload / Description</th>
+          </tr>
+        </thead>
+        <tbody id="packetRows"></tbody>
+      </table>
+    </div>
+
+    <p class="tip">Viva tip: DNS uses port 53 to resolve a domain into an IP address. HTTPS commonly uses TCP port 443 after the TCP 3-way handshake.</p>
+  </main>
+
+  <script>
+    const CLIENT_IP = "192.168.1.100";
+    const DNS_SERVER_IP = "8.8.8.8";
+    const FALLBACK_IPS = {
+      "google.com": "142.250.185.46",
+      "www.google.com": "142.250.185.46",
+      "example.com": "93.184.216.34",
+      "github.com": "140.82.112.3",
+      "openai.com": "104.18.33.45",
+      "youtube.com": "142.250.185.46"
+    };
+
+    let activePacketKey = "";
+    let currentPackets = [];
+    let currentResults = [];
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function normalizeDomain(value) {
+      const cleaned = String(value).trim();
+      if (!cleaned) {
+        return "google.com";
+      }
+      try {
+        const url = new URL(cleaned.includes("://") ? cleaned : `https://${cleaned}`);
+        return url.hostname.toLowerCase().replace(/\.$/, "");
+      } catch {
+        return cleaned.toLowerCase().replace(/^https?:\/\//, "").split("/")[0].replace(/\.$/, "");
+      }
+    }
+
+    function splitDomainInputs(value) {
+      const domains = String(value)
+        .replaceAll(",", " ")
+        .replaceAll("\n", " ")
+        .replaceAll("\t", " ")
+        .split(" ")
+        .map(normalizeDomain)
+        .filter(Boolean);
+      return [...new Set(domains)].slice(0, 6);
+    }
+
+    function demoIpForDomain(domain) {
+      const knownIp = FALLBACK_IPS[domain.toLowerCase()];
+      if (knownIp) {
+        return knownIp;
+      }
+
+      let hash = 0;
+      for (const character of domain) {
+        hash = (hash * 31 + character.charCodeAt(0)) % 250;
+      }
+      return `203.0.113.${hash + 1}`;
+    }
+
+    function buildPackets(domain, serverIp) {
+      return [
+        { number: 1, source: CLIENT_IP, destination: DNS_SERVER_IP, protocol: "DNS", port: 53, status: "Query", payload: `Client asks DNS server for ${domain}` },
+        { number: 2, source: DNS_SERVER_IP, destination: CLIENT_IP, protocol: "DNS", port: 53, status: "Response", payload: `DNS server returns ${serverIp}` },
+        { number: 3, source: CLIENT_IP, destination: serverIp, protocol: "TCP", port: 443, status: "SYN", payload: "Client starts TCP 3-way handshake" },
+        { number: 4, source: serverIp, destination: CLIENT_IP, protocol: "TCP", port: 443, status: "SYN-ACK", payload: "Server accepts and acknowledges the connection request" },
+        { number: 5, source: CLIENT_IP, destination: serverIp, protocol: "TCP", port: 443, status: "ACK", payload: "Client acknowledges the server response" },
+        { number: 6, source: CLIENT_IP, destination: serverIp, protocol: "HTTPS", port: 443, status: "Secure Request", payload: `Browser is ready to request https://${domain}` }
+      ];
+    }
+
+    function buildDemoResults(domains) {
+      return domains.map((domain) => {
+        const ip = demoIpForDomain(domain);
+        return {
+          domain,
+          ip,
+          isLive: false,
+          note: FALLBACK_IPS[domain.toLowerCase()]
+            ? "Known demo fallback IP used because the local DNS API is not running."
+            : "Generated demo-only IP used. Run python3 app.py --web for live DNS.",
+          packets: buildPackets(domain, ip)
+        };
+      });
+    }
+
+    async function resolveDomains(domains) {
+      const query = encodeURIComponent(domains.join(","));
+      const urls = location.protocol.startsWith("http")
+        ? [`/api/resolve?domains=${query}`]
+        : [`http://127.0.0.1:8000/api/resolve?domains=${query}`];
+
+      for (const url of urls) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 1800);
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.results) && data.results.length) {
+              return data.results;
+            }
+          }
+        } catch {
+          // Browser demo fallback is handled below.
+        }
+      }
+
+      return buildDemoResults(domains);
+    }
+
+    function renderPacketDetail(packet) {
+      const detail = document.querySelector("#packetDetail");
+      detail.innerHTML = [
+        ["Packet", `#${packet.number}`],
+        ["Protocol", packet.protocol],
+        ["Port", packet.port],
+        ["Status", packet.status],
+        ["Source", packet.source],
+        ["Destination", packet.destination],
+        ["Domain", packet.domain || currentResults[0]?.domain || "google.com"],
+        ["Payload", packet.payload]
+      ].map(([label, value]) => {
+        return `<div class="detail-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+      }).join("");
+    }
+
+    function selectPacket(key) {
+      activePacketKey = key;
+      const packet = currentPackets.find((item) => item.key === key) || currentPackets[0];
+      renderPacketDetail(packet);
+
+      document.querySelectorAll("[data-packet-key]").forEach((element) => {
+        element.classList.toggle("active", element.dataset.packetKey === key);
+        element.classList.toggle("active-row", element.dataset.packetKey === key);
+      });
+    }
+
+    function renderComparison(results) {
+      document.querySelector("#comparisonGrid").innerHTML = results.map((result) => {
+        return `<article class="comparison-card ${result.isLive ? "live" : "demo"}">
+          <span>${result.isLive ? "Live DNS" : "Demo Mode"}</span>
+          <strong>${escapeHtml(result.domain)}</strong>
+          <code>${escapeHtml(result.ip)}</code>
+          <p>${escapeHtml(result.note || "")}</p>
+        </article>`;
+      }).join("");
+    }
+
+    async function simulate() {
+      const domainInput = document.querySelector("#domain");
+      const domains = splitDomainInputs(domainInput.value || "google.com");
+      currentResults = await resolveDomains(domains);
+      currentPackets = currentResults.flatMap((result) => {
+        return result.packets.map((packet) => ({
+          ...packet,
+          domain: result.domain,
+          key: `${result.domain}-${packet.number}`
+        }));
+      });
+      activePacketKey = currentPackets[0]?.key || "";
+
+      const firstResult = currentResults[0];
+      domainInput.value = domains.join(", ");
+      renderComparison(currentResults);
+
+      const lookupMode = currentResults.every((result) => result.isLive) ? "Live DNS" : "Demo fallback available";
+      const summaryParts = currentResults.map((result) => `${result.domain} -> ${result.ip}`);
+
+      document.querySelector("#serverIp").textContent = firstResult.ip;
+      document.querySelector("#summary").textContent =
+        `${lookupMode}: ${summaryParts.join(" | ")}. Client ${CLIENT_IP} uses DNS port 53 and then TCP port 443.`;
+      document.querySelector("#flowText").textContent =
+        `DNS query for ${firstResult.domain} -> DNS response ${firstResult.ip} -> TCP SYN -> SYN-ACK -> ACK -> HTTPS ready`;
+
+      document.querySelector("#timeline").innerHTML = currentPackets.map((packet) => {
+        return `<button class="step" data-packet-key="${escapeHtml(packet.key)}" type="button">
+          <span>${escapeHtml(packet.domain)} · Packet ${packet.number}</span>
+          <strong>${escapeHtml(packet.status)}</strong>
+        </button>`;
+      }).join("");
+
+      document.querySelector("#packetRows").innerHTML = currentPackets.map((packet) => {
+        const protocol = packet.protocol.toLowerCase();
+        return `<tr data-packet-key="${escapeHtml(packet.key)}">
+          <td>${packet.number}</td>
+          <td>${escapeHtml(packet.domain)}</td>
+          <td>${escapeHtml(packet.source)}</td>
+          <td>${escapeHtml(packet.destination)}</td>
+          <td><span class="badge badge-${protocol}">${escapeHtml(packet.protocol)}</span></td>
+          <td><span class="port">${escapeHtml(packet.port)}</span></td>
+          <td>${escapeHtml(packet.status)}</td>
+          <td>${escapeHtml(packet.payload)}</td>
+        </tr>`;
+      }).join("");
+
+      document.querySelectorAll("[data-packet-key]").forEach((element) => {
+        element.addEventListener("click", () => selectPacket(element.dataset.packetKey));
+      });
+      selectPacket(activePacketKey);
+    }
+
+    document.querySelector("#simulate").addEventListener("click", simulate);
+    document.querySelector("#domain").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        simulate();
+      }
+    });
+    simulate();
+  </script>
+</body>
+</html>
