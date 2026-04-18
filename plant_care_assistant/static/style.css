@@ -415,10 +415,173 @@ body::before {
   background: rgba(255, 255, 255, 0.58);
 }
 
+.placement-section,
+.deficiency-section,
+.disease-section {
+  margin-top: 26px;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(252, 250, 244, 0.82);
+  box-shadow: var(--shadow);
+}
+
+.section-heading {
+  max-width: 760px;
+}
+
+.section-heading h2 {
+  margin: 0 0 10px;
+  font-size: 2rem;
+}
+
+.section-heading p,
+.placement-column p,
+.placement-list small,
+.deficiency-card p,
+.deficiency-card li,
+.disease-card p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.placement-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.placement-column {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fffef9;
+}
+
+.placement-column h3 {
+  margin: 0 0 8px;
+  font-size: 1.14rem;
+}
+
+.placement-column p {
+  margin: 0 0 16px;
+}
+
+.placement-list {
+  display: grid;
+  gap: 10px;
+}
+
+.placement-list form {
+  margin: 0;
+}
+
+.placement-list button {
+  width: 100%;
+  border: 1px solid rgba(47, 111, 67, 0.14);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(162, 197, 121, 0.1);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.placement-list button:hover {
+  border-color: rgba(47, 111, 67, 0.32);
+  background: rgba(162, 197, 121, 0.18);
+}
+
+.placement-list span,
+.placement-list small {
+  display: block;
+}
+
+.placement-list span {
+  font-weight: 700;
+}
+
+.placement-list small {
+  margin-top: 3px;
+}
+
+.deficiency-grid,
+.disease-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.deficiency-card,
+.disease-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fffef9;
+}
+
+.deficiency-title {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.deficiency-title span {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(47, 111, 67, 0.1);
+  color: var(--forest);
+  font-weight: 800;
+}
+
+.deficiency-title h3 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.deficiency-card h4 {
+  margin: 16px 0 8px;
+}
+
+.deficiency-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.deficiency-card li + li {
+  margin-top: 6px;
+}
+
+.disease-card h3 {
+  margin: 0 0 12px;
+  font-size: 1.12rem;
+}
+
+.disease-card p {
+  margin: 0;
+}
+
+.disease-card p + p {
+  margin-top: 10px;
+}
+
+.disease-card strong {
+  color: var(--forest-deep);
+}
+
 @media (max-width: 920px) {
   .hero,
   .workspace,
-  .care-grid {
+  .care-grid,
+  .placement-grid,
+  .deficiency-grid,
+  .disease-grid {
     grid-template-columns: 1fr;
   }
 
@@ -430,7 +593,10 @@ body::before {
   .hero-copy,
   .hero-panel,
   .input-card,
-  .result-card {
+  .result-card,
+  .placement-section,
+  .deficiency-section,
+  .disease-section {
     border-radius: 24px;
   }
 

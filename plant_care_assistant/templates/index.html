@@ -39,6 +39,14 @@
             <span>Plant profiles</span>
           </div>
           <div class="panel-stat">
+            <strong>{{ mineral_deficiencies|length }}</strong>
+            <span>Deficiency guides</span>
+          </div>
+          <div class="panel-stat">
+            <strong>{{ common_diseases|length }}</strong>
+            <span>Disease cures</span>
+          </div>
+          <div class="panel-stat">
             <strong>1</strong>
             <span>Clean web app</span>
           </div>
@@ -252,6 +260,120 @@
             </p>
           </div>
           {% endif %}
+        </div>
+      </section>
+
+      <section class="placement-section">
+        <div class="section-heading">
+          <span class="result-label">Placement Guide</span>
+          <h2>Indoor and Outdoor Plant Groups</h2>
+          <p>
+            Choose plants by where they grow best, then search the plant name
+            above for full care details.
+          </p>
+        </div>
+
+        <div class="placement-grid">
+          <article class="placement-column">
+            <h3>Indoor Plants</h3>
+            <p>Best for rooms, desks, shaded corners, and filtered light spaces.</p>
+            <div class="placement-list">
+              {% for plant in placement_groups.indoor %}
+              <form method="post">
+                <input type="hidden" name="action" value="text-search" />
+                <input type="hidden" name="plant_name" value="{{ plant.name }}" />
+                <button type="submit">
+                  <span>{{ plant.name }}</span>
+                  <small>{{ plant.location }}</small>
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </article>
+
+          <article class="placement-column">
+            <h3>Outdoor Plants</h3>
+            <p>Best for gardens, terraces, sunny balconies, and stronger light.</p>
+            <div class="placement-list">
+              {% for plant in placement_groups.outdoor %}
+              <form method="post">
+                <input type="hidden" name="action" value="text-search" />
+                <input type="hidden" name="plant_name" value="{{ plant.name }}" />
+                <button type="submit">
+                  <span>{{ plant.name }}</span>
+                  <small>{{ plant.location }}</small>
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </article>
+
+          <article class="placement-column">
+            <h3>Indoor or Outdoor</h3>
+            <p>Flexible plants that can adapt when light and watering are suitable.</p>
+            <div class="placement-list">
+              {% for plant in placement_groups.flexible %}
+              <form method="post">
+                <input type="hidden" name="action" value="text-search" />
+                <input type="hidden" name="plant_name" value="{{ plant.name }}" />
+                <button type="submit">
+                  <span>{{ plant.name }}</span>
+                  <small>{{ plant.location }}</small>
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="deficiency-section">
+        <div class="section-heading">
+          <span class="result-label">Plant Nutrition</span>
+          <h2>Common Mineral Deficiencies in Household Ornamental Plants</h2>
+          <p>
+            Use these visible symptoms as first clues when leaves change color,
+            growth slows down, or new shoots become distorted.
+          </p>
+        </div>
+
+        <div class="deficiency-grid">
+          {% for deficiency in mineral_deficiencies %}
+          <article class="deficiency-card">
+            <div class="deficiency-title">
+              <span>{{ deficiency.symbol }}</span>
+              <h3>{{ deficiency.name }}</h3>
+            </div>
+            <p>{{ deficiency.role }}</p>
+            <h4>Symptoms</h4>
+            <ul>
+              {% for symptom in deficiency.symptoms %}
+              <li>{{ symptom }}</li>
+              {% endfor %}
+            </ul>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="disease-section">
+        <div class="section-heading">
+          <span class="result-label">Plant Diseases</span>
+          <h2>Common Diseases in Household Plants and How to Cure Them</h2>
+          <p>
+            Match the visible sign with the closest disease name, then start with
+            isolation, pruning, cleaner airflow, and the listed cure.
+          </p>
+        </div>
+
+        <div class="disease-grid">
+          {% for disease in common_diseases %}
+          <article class="disease-card">
+            <h3>{{ disease.name }}</h3>
+            <p><strong>Signs:</strong> {{ disease.signs }}</p>
+            <p><strong>Cure:</strong> {{ disease.cure }}</p>
+          </article>
+          {% endfor %}
         </div>
       </section>
     </div>

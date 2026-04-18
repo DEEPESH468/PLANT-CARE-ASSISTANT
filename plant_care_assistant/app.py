@@ -14,6 +14,8 @@ from database_utils import (
     search_plant_database,
 )
 from image_classifier import PlantImageClassifier
+from mineral_deficiencies import MINERAL_DEFICIENCIES
+from plant_diseases import COMMON_DISEASES
 
 
 app = Flask(__name__)
@@ -27,6 +29,39 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 def _allowed_file(filename: str) -> bool:
     """Validate image file extensions before classification."""
     return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
+
+
+def _group_plants_by_location(database: dict) -> dict:
+    """Group plants into indoor, outdoor, and flexible placement lists."""
+    placement_groups = {
+        "indoor": [],
+        "outdoor": [],
+        "flexible": [],
+    }
+
+    for plant_name, details in sorted(database.items()):
+        location = details.get("location", "Not specified")
+        normalized_location = location.lower()
+        plant_summary = {
+            "name": plant_name,
+            "location": location,
+            "sunlight": details.get("sunlight_requirement", ""),
+        }
+
+        has_indoor = "indoor" in normalized_location
+        has_outdoor = "outdoor" in normalized_location
+        has_balcony = "balcony" in normalized_location
+
+        if has_indoor and (has_outdoor or has_balcony):
+            placement_groups["flexible"].append(plant_summary)
+        elif has_indoor:
+            placement_groups["indoor"].append(plant_summary)
+        elif has_outdoor or has_balcony:
+            placement_groups["outdoor"].append(plant_summary)
+        else:
+            placement_groups["flexible"].append(plant_summary)
+
+    return placement_groups
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -101,6 +136,9 @@ def index():
         search_query=search_query,
         suggestions=suggestions,
         health_analysis=health_analysis,
+        mineral_deficiencies=MINERAL_DEFICIENCIES,
+        common_diseases=COMMON_DISEASES,
+        placement_groups=_group_plants_by_location(DATABASE),
         plants=get_available_plants(DATABASE),
         plant_count=len(DATABASE),
     )
