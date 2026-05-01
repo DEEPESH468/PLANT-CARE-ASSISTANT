@@ -328,6 +328,24 @@ Spider Plant
 Syngonium
 ```
 
+## SDG Alignment
+
+This project is mainly aligned with **Sustainable Development Goal 15: Life on Land**.
+
+The Plant Care Assistant supports plant health by helping users understand watering needs, sunlight requirements, soil conditions, common diseases, and mineral deficiencies. By making plant care information easier to access, the project encourages better care of household plants, garden plants, and small-scale green spaces.
+
+The project also supports these related SDGs:
+
+- **SDG 2: Zero Hunger** - healthy plant-care guidance can support small gardens, kitchen gardening, and better plant productivity.
+- **SDG 12: Responsible Consumption and Production** - proper plant maintenance can reduce plant waste caused by overwatering, poor sunlight, disease, or neglect.
+- **SDG 13: Climate Action** - encouraging plant care and greenery builds awareness of environment-friendly habits.
+
+For project presentation, the best primary SDG to mention is:
+
+```text
+SDG 15: Life on Land
+```
+
 ## How to Add More Plants
 
 To add more plants:
