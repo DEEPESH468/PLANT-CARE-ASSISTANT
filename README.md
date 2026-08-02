@@ -200,7 +200,7 @@ B.Tech CSE (Artificial Intelligence & Machine Learning)
 <img src="https://img.shields.io/badge/GitHub-DEEPESH468-181717?style=for-the-badge&logo=github">
 </a>
 
-<a href="https://www.linkedin.com/in/deepesh-kumar-singh">
+<a href="https://www.linkedin.com/in/deepeshkumar-singh/">
 <img src="https://img.shields.io/badge/LinkedIn-Deepesh%20Kumar%20Singh-0077B5?style=for-the-badge&logo=linkedin">
 </a>
 
