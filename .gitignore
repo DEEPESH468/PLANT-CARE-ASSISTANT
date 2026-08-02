@@ -1,3 +1,6 @@
+datasets/
+training_images/
+plant_image_model.joblib
 venv/
 .venv/
 __pycache__/
